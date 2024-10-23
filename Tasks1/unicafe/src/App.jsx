@@ -1,35 +1,84 @@
 import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
 
-function App() {
-  const [count, setCount] = useState(0)
+const Header = ({ text }) => <h2>{text}</h2>
 
+const Button = (props) => 
+  <button onClick={props.handleclick}>
+    {props.text}
+  </button>
+
+const StatisticLine = ({text, value}) => {
   return (
-    <>
-      <div>
-        <a href="https://vitejs.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
+    <tr>
+      <td>{text}</td>
+      <td>{value}</td>
+    </tr>
   )
+}
+const Statistics = (props) => {
+  if (props.percentage == '%') {
+    return (
+      <span>{(props.dividend / props.divisor)*100} {props.percentage} </span>
+    )
+  } else {
+  return (
+   <span>{props.dividend / props.divisor} </span>
+  )}
+}
+
+const App = () => {
+  const [good, setGood] = useState(0)
+  const [neutral, setNeutral] = useState(0)
+  const [bad, setBad] = useState(0)
+  const [score, setScore] = useState(0)
+  const [total, setTotal] = useState(0)
+
+  const increaseGood = () => {
+    setGood(good +1)
+    setScore(score + 1)
+    setTotal(total + 1)
+  }
+
+  const increaseNeutral = () => {
+    setNeutral(neutral + 1)
+    setTotal(total + 1)
+  }
+
+  const increaseBad = () => {
+    setBad(bad +1)
+    setScore(score - 1)
+    setTotal(total + 1)
+  }
+  if (total > 0) {
+    return (
+      <div>
+        <Header text='give feedback' />
+        <Button handleclick={increaseGood} text='good' />
+        <Button handleclick={increaseNeutral} text='neutral' />
+        <Button handleclick={increaseBad} text='bad' />
+        <Header text='statistics' />
+        <table>
+          <tbody>
+            <StatisticLine text='good' value={good} />
+            <StatisticLine text='neutral' value={neutral} />
+            <StatisticLine text='bad' value={bad} />
+            <StatisticLine text='all' value={total} />
+            <StatisticLine text='average' value={<Statistics dividend={score} divisor={total} />} />
+            <StatisticLine text='positive' value={<Statistics dividend={good} divisor={total} percentage='%'/>}/>
+          </tbody>
+        </table>
+      </div>
+    )} else {
+    return (
+      <div>
+        <Header text='give feedback' />
+        <Button handleclick={increaseGood} text='good' />
+        <Button handleclick={increaseNeutral} text='neutral' />
+        <Button handleclick={increaseBad} text='bad' />
+        <Header text='statistics' />
+        <p>No feedback given</p>
+      </div>  
+    )};
 }
 
 export default App
