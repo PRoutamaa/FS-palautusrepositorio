@@ -16,13 +16,14 @@ const StatisticLine = ({text, value}) => {
   )
 }
 const Statistics = (props) => {
+  const calculation = props.dividend / props.divisor
   if (props.percentage == '%') {
     return (
-      <span>{(props.dividend / props.divisor)*100} {props.percentage} </span>
+      <span>{(calculation*100).toFixed(1)} {props.percentage} </span>
     )
   } else {
   return (
-   <span>{props.dividend / props.divisor} </span>
+   <span>{calculation.toFixed(1)} </span>
   )}
 }
 
