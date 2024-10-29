@@ -1,8 +1,11 @@
 import axios from 'axios'
 import { useState, useEffect } from 'react'
+import phoneBookService from './services/persons'
 
-const Allnumbers = ({person}) => {
-  return(<li>{person.name} {person.number}</li>)
+const Allnumbers = ({person, pressDelete}) => {
+  return(<li>
+    {person.name} {person.number} <button onClick={pressDelete}>Delete</button>
+    </li>)
 }
 
 const PersonForm = (props) => {
@@ -34,18 +37,15 @@ const FilterPhonebook = ({filterCondition, handleFilter}) =>
 
 const App = () => {
   const [persons, setPersons] = useState([])
-
   const [newName, setNewName] = useState('')
   const [newNumber, setNewNumber] = useState('')
   const [filterCondition, setFilterCondition] = useState('')
 
 useEffect(() => {
-  console.log('effect')
-  axios
-  .get('http://localhost:3001/persons')
-  .then((response) => {
-    console.log(response.data)
-    setPersons(response.data)
+  phoneBookService
+  .retrieveAll()
+  .then(initPerson => {
+    setPersons(initPerson)
   })
 }, [])
 
@@ -55,15 +55,35 @@ const addName = (event) => {
   console.log(names)
 
   if (names != undefined) {
-    alert(`Name: ${newName} is already in the phonebook`)
+    const confirmChange = window.confirm(
+      `Name: ${newName} is already in the phonebook, replace the old number with new one?`
+    )
+    if (confirmChange) {
+      const chosen = persons.find(n => n.name === newName)
+      const nameObject = {
+        ...chosen,
+        number: newNumber
+      }
+      phoneBookService
+      .updateNumber(nameObject)
+      .then(updatedPerson => {
+        setPersons(persons.map(n => n.id !== nameObject.id ? n : updatedPerson))
+        setNewName('')
+        setNewNumber('')
+      })
+    }
   } else {
   const nameObject = {
     name: newName,
     number: newNumber
   }
-  setPersons(persons.concat(nameObject))
-  setNewName('')
-  setNewNumber('')
+  phoneBookService
+  .createNew(nameObject)
+  .then(newPerson => {
+    setPersons(persons.concat(newPerson))
+    setNewName('')
+    setNewNumber('')
+  })
   console.log(persons)
 }}
 
@@ -87,6 +107,14 @@ const handleFilter = (event) => {
 
 }
 
+const delHandler = (person) => {
+  const confirmDelete = window.confirm(`Delete ${person.name}?`)
+  if (confirmDelete) {
+    phoneBookService.delPerson(person.id)
+    setPersons(persons.filter(n => n.id !== person.id))
+  }
+}
+
   return (
     <div>
       <h2>Phonebook</h2>
@@ -102,7 +130,7 @@ const handleFilter = (event) => {
       <h2>Numbers</h2>
       <ul>
          {persons.filter((person) => person.name.toLowerCase().includes(filterCondition.toLowerCase())).map((person) => 
-          <Allnumbers key={person.name} person={person}/>
+          <Allnumbers key={person.id} person={person} pressDelete={() => delHandler(person)}/>
         )} 
       </ul>
       
