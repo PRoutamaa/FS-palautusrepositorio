@@ -1,45 +1,20 @@
-import axios from 'axios'
+
 import { useState, useEffect } from 'react'
 import phoneBookService from './services/persons'
+import Allnumbers from './components/Allnumbers.jsx'
+import FilterPhonebook from './components/FilterPhonebook.jsx'
+import PersonForm from './components/PersonForm.jsx'
+import Notification from './components/Notification.jsx'
 
-const Allnumbers = ({person, pressDelete}) => {
-  return(<li>
-    {person.name} {person.number} <button onClick={pressDelete}>Delete</button>
-    </li>)
-}
-
-const PersonForm = (props) => {
-  return (
-    <form onSubmit={props.addName}>
-        <div>
-          name: <input 
-            value={props.newName}
-            onChange={props.handleNameChange}
-            />
-        </div>
-        <div>
-          number: <input 
-            value={props.newNumber} 
-            onChange={props.handleNumberChange} /></div>
-        <div>
-          <button type="submit" >add</button>
-        </div>
-      </form>
-  )
-}
-
-const FilterPhonebook = ({filterCondition, handleFilter}) => 
-<div>
-  Filter phonebook with<input 
-    value={filterCondition}
-    onChange={handleFilter}/>
-</div>
 
 const App = () => {
   const [persons, setPersons] = useState([])
   const [newName, setNewName] = useState('')
   const [newNumber, setNewNumber] = useState('')
   const [filterCondition, setFilterCondition] = useState('')
+  const [message, setMessage] = useState(null)
+  const [cond, setCond] = useState('message')
+
 
 useEffect(() => {
   phoneBookService
@@ -70,7 +45,13 @@ const addName = (event) => {
         setPersons(persons.map(n => n.id !== nameObject.id ? n : updatedPerson))
         setNewName('')
         setNewNumber('')
+        setMessage(`${nameObject.name} phone number was changed`)
+        console.log(message)
       })
+      .catch(error => {
+        setCond('error')
+        setMessage(`Please note, ${nameObject.name} has already been deleted from the phonebook`)});
+        setPersons(persons.filter(n => n.id !== nameObject.id))
     }
   } else {
   const nameObject = {
@@ -83,9 +64,12 @@ const addName = (event) => {
     setPersons(persons.concat(newPerson))
     setNewName('')
     setNewNumber('')
+    setMessage(`${nameObject.name} was added to the phonebook`)
   })
   console.log(persons)
-}}
+}
+setTimeout(() => {setMessage(null), setCond('message')}, 4000)
+}
 
 const handleNameChange = (event) => {
   event.preventDefault()
@@ -111,13 +95,27 @@ const delHandler = (person) => {
   const confirmDelete = window.confirm(`Delete ${person.name}?`)
   if (confirmDelete) {
     phoneBookService.delPerson(person.id)
-    setPersons(persons.filter(n => n.id !== person.id))
+    .then( () => {
+        setMessage(`${person.name} was deleted`)
+        setPersons(persons.filter(n => n.id !== person.id))
+        console.log(person.name)
+    })
+    .catch(error => {
+      setCond('error')
+      setPersons(persons.filter(n => n.id !== person.id))
+      setMessage(
+        `Please note, ${person.name} has already been deleted from the phonebook`
+       )
+    })
   }
+ 
+  setTimeout(() => {setMessage(null), setCond('message')}, 4000)
 }
 
   return (
     <div>
       <h2>Phonebook</h2>
+      <Notification message={message} cond={cond}/>
       <FilterPhonebook filterCondition={filterCondition} handleFilter={handleFilter} />
       <h2>Add new person</h2>
       <PersonForm 
